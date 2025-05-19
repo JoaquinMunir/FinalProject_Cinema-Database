@@ -1,0 +1,102 @@
+﻿@page "/salas/nueva"
+@page "/salas/editar/{Id:int}"
+@inject NavigationManager navigation
+@inject IRepoSalas repoSalas
+@rendermode InteractiveServer
+
+<PageTitle>Salas</PageTitle>
+<h3>@_titulo Salas</h3>
+
+<EditForm Model="_sala" FormName="frmSala" OnValidSubmit="Guardar">
+    <DataAnnotationsValidator />
+
+    <!-- Numero -->
+    <div class="mb-3 row">
+        <label class="col-sm-2 col-form-label">Número</label>
+        <div class="col-sm-10">
+            <InputNumber @bind-Value="_sala.Numero" class="form-control" />
+            <ValidationMessage For="@(() => _sala.Numero)" />
+        </div>
+    </div>
+
+    <!-- Capacidad -->
+    <div class="mb-3 row">
+        <label class="col-sm-2 col-form-label">Capacidad</label>
+        <div class="col-sm-10">
+            <InputNumber Class="form-control" @bind-Value="_sala.Capacidad" />
+            <ValidationMessage For="@(() => _sala.Capacidad)" />
+        </div>
+    </div>
+
+
+    <!-- Tipo -->
+    <div class="mb-3 row">
+        <label class="col-sm-2 col-form-label">Tipo</label>
+        <div class="col-sm-10">
+            <InputSelect @bind-Value="_sala.Tipo" class="form-control">
+                <option value=""></option>
+                @foreach (Tipo tipo in Enum.GetValues(typeof(Tipo)))
+                {
+                    <option value="@tipo">@tipo.GetDisplayName()</option>
+                }
+            </InputSelect>
+            <ValidationMessage For="@(() => _sala.Tipo)" />
+        </div>
+    </div>
+
+    <!-- Botones -->
+    <div class="row">
+        <div class="col-sm-10 offset-sm-2">
+            <button type="submit" class="btn btn-primary">Guardar</button>
+            <button type="button" class="btn btn-danger" @onclick="Cancelar">Cancelar</button>
+        </div>
+    </div>
+</EditForm>
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+
+    private Sala _sala = new();
+    private string _titulo = "Nueva ";
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (Id > 0)
+        {
+            _sala = await repoSalas.Get(Id);
+            _titulo = "Modificar ";
+        }
+    }
+
+    private async Task Guardar()
+    {
+        Console.WriteLine("Método Guardar iniciado");
+
+        try
+        {
+            if (Id > 0)
+            {
+                await repoSalas.Update(_sala);
+                Console.WriteLine("Update done");
+            }
+            else
+            {
+                await repoSalas.Add(_sala);
+                Console.WriteLine("Add done");
+            }
+
+            Cancelar();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error en guardar: {ex.Message}");
+        }
+    }
+
+
+    private void Cancelar()
+    {
+        navigation.NavigateTo("/salas");
+    }
+}

@@ -1,0 +1,110 @@
+﻿@page "/boletos/nuevo"
+@page "/boletos/editar/{Id:int}"
+@inject NavigationManager navigation
+@inject IRepoBoletos repoBoletos
+@inject IRepoFunciones repoFunciones
+@rendermode InteractiveServer
+
+<PageTitle>Boletos</PageTitle>
+<h3>@_titulo Boletos</h3>
+
+<EditForm Model="_boleto" FormName="frmBoleto" OnValidSubmit="Guardar">
+    <DataAnnotationsValidator />
+
+    <!-- Funcion (select) -->
+    <div class="mb-3 row">
+        <label class="col-sm-2 col-form-label">Función</label>
+        <div class="col-sm-10">
+            <InputSelect @bind-Value="_boleto.IdFuncion" class="form-control">
+                <option value="">Seleccione una función...</option>
+                @foreach (var funciones in _funcion)
+                {
+                    <option value="@funciones.Id">@ShowFuncion(@funciones.Fecha, @funciones.Horario)</option>
+                }
+            </InputSelect>
+            <ValidationMessage For="@(() => _boleto.IdFuncion)" />
+        </div>
+    </div>
+
+    <!-- Asiento -->
+    <div class="mb-3 row">
+        <label class="col-sm-2 col-form-label">Asiento</label>
+        <div class="col-sm-10">
+            <InputNumber Class="form-control" @bind-Value="_boleto.Asiento" />
+            <ValidationMessage For="@(() => _boleto.Asiento)" />
+        </div>
+    </div>
+
+    <!-- Precio -->
+    <div class="mb-3 row">
+        <label class="col-sm-2 col-form-label">Precio</label>
+        <div class="col-sm-10">
+            <InputNumber Class="form-control" @bind-Value="_boleto.Precio" />
+            <ValidationMessage For="@(() => _boleto.Precio)" />
+        </div>
+    </div>
+
+    <!-- Botones -->
+    <div class="row">
+        <div class="col-sm-10 offset-sm-2">
+            <button type="submit" class="btn btn-primary">Guardar</button>
+            <button type="button" class="btn btn-danger" @onclick="Cancelar">Cancelar</button>
+        </div>
+    </div>
+</EditForm>
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+
+    private Boleto _boleto = new();
+    private List<Funcion> _funcion = new();
+
+    private string _titulo = "Nueva ";
+
+    protected override async Task OnInitializedAsync()
+    {
+        _funcion = await repoFunciones.GetAll();
+
+        if (Id > 0)
+        {
+            _boleto = await repoBoletos.Get(Id);
+            _titulo = "Modificar ";
+        }
+    }
+
+    private async Task Guardar()
+    {
+        Console.WriteLine("Método Guardar iniciado");
+
+        try
+        {
+            if (Id > 0)
+            {
+                await repoBoletos.Update(_boleto);
+                Console.WriteLine("Update done");
+            }
+            else
+            {
+                await repoBoletos.Add(_boleto);
+                Console.WriteLine("Add done");
+            }
+
+            Cancelar();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error en guardar: {ex.Message}");
+        }
+    }
+
+
+    private void Cancelar()
+    {
+        navigation.NavigateTo("/boletos");
+    }
+    private string ShowFuncion(DateTime fecha, TimeSpan horario)
+    {
+        return fecha.Add(horario).ToString(@"dd 'de' MMMM 'del' yyyy 'a las' HH:mm:ss");
+    }
+}

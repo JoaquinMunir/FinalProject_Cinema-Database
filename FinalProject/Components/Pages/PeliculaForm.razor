@@ -1,0 +1,110 @@
+﻿@page "/peliculas/nueva"
+@page "/peliculas/editar/{Id:int}"
+@inject NavigationManager navigation
+@inject IRepoPeliculas repoPeliculas
+@rendermode InteractiveServer
+
+<PageTitle>Películas</PageTitle>
+<h3>@_titulo Película</h3>
+
+<EditForm Model="_pelicula" FormName="frmPelicula" OnValidSubmit="Guardar">
+    <DataAnnotationsValidator />
+
+    <!-- Título -->
+    <div class="mb-3 row">
+        <label class="col-sm-2 col-form-label">Título</label>
+        <div class="col-sm-10">
+            <InputText @bind-Value="_pelicula.Titulo" class="form-control" />
+            <ValidationMessage For="@(() => _pelicula.Titulo)" />
+        </div>
+    </div>
+
+    <!-- Duración -->
+    <div class="mb-3 row">
+        <label class="col-sm-2 col-form-label">Duración</label>
+        <div class="col-sm-10">
+            <InputTimeSpan Class="form-control" @bind-Value="_pelicula.Duracion" />
+            <ValidationMessage For="@(() => _pelicula.Duracion)" />
+        </div>
+    </div>
+
+    <!-- Clasificación -->
+    <div class="mb-3 row">
+        <label class="col-sm-2 col-form-label">Clasificación</label>
+        <div class="col-sm-10">
+            <InputSelect @bind-Value="_pelicula.Clasificacion" class="form-control">
+                <option value="">Seleccione...</option>
+                @foreach (var value in Enum.GetValues(typeof(Clasificacion)))
+                {
+                    <option value="@value">@value.ToString()</option>
+                }
+            </InputSelect>
+            <ValidationMessage For="@(() => _pelicula.Clasificacion)" />
+        </div>
+    </div>
+
+    <!-- Genero -->
+    <div class="mb-3 row">
+        <label class="col-sm-2 col-form-label">Género</label>
+        <div class="col-sm-10">
+            <InputText @bind-Value="_pelicula.Genero" class="form-control" />
+            <ValidationMessage For="@(() => _pelicula.Genero)" />
+        </div>
+    </div>
+
+    <!-- Botones -->
+    <div class="row">
+        <div class="col-sm-10 offset-sm-2">
+            <button type="submit" class="btn btn-primary">Guardar</button>
+            <button type="button" class="btn btn-danger" @onclick="Cancelar">Cancelar</button>
+        </div>
+    </div>
+</EditForm>
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+
+    private Pelicula _pelicula = new();
+    private string _titulo = "Nueva ";
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (Id > 0)
+        {
+            _pelicula = await repoPeliculas.Get(Id);
+            _titulo = "Modificar ";
+        }
+    }
+
+    private async Task Guardar()
+    {
+        Console.WriteLine("Método Guardar iniciado");
+
+        try
+        {
+            if (Id > 0)
+            {
+                await repoPeliculas.Update(_pelicula);
+                Console.WriteLine("Update done");
+            }
+            else
+            {
+                await repoPeliculas.Add(_pelicula);
+                Console.WriteLine("Add done");
+            }
+
+            Cancelar();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error en guardar: {ex.Message}");
+        }
+    }
+
+
+    private void Cancelar()
+    {
+        navigation.NavigateTo("/peliculas");
+    }
+}

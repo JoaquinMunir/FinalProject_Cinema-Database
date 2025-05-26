@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Microsoft.EntityFrameworkCore;
 
 namespace FinalProject.Data
 {
@@ -18,7 +19,7 @@ namespace FinalProject.Data
         IMAX
     }
 
-    public class Funcion
+    public class Funcion : IValidatableObject
     {
         [Key]
         public int Id { get; set; }
@@ -46,5 +47,28 @@ namespace FinalProject.Data
         [ForeignKey("IdSala")]
         public virtual Sala? Sala { get; set; }
 
+        public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
+        {
+            var dbContext = (FinalProjectDbContext)validationContext.GetService(typeof(FinalProjectDbContext));
+
+            if (dbContext == null)
+            {
+                yield break;
+            }
+
+            bool existeConflicto = dbContext.Funciones.Any(f =>
+                f.IdSala == this.IdSala &&
+                f.Fecha == this.Fecha &&
+                f.Horario == this.Horario &&
+                f.Id != this.Id
+            );
+
+            if (existeConflicto)
+            {
+                yield return new ValidationResult(
+                    "Ya existe una función programada en esta sala, fecha y horario.",
+                    new[] { nameof(IdSala), nameof(Fecha), nameof(Horario) });
+            }
+        }
     }
 }
